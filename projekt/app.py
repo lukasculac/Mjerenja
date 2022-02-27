@@ -10,8 +10,7 @@ from time import sleep
 port = "COM3"
 i = 0
 data  = []
-buffer = [20.18,1010.93,38.45,100.00]
-
+buffer = [20,1010,500,100.00]
 
 def conn():
     global data
@@ -24,6 +23,7 @@ def conn():
     data = string.split("x")          
     ser.close()
     x = len(data)
+    #print(data)
     if(x == 4): 
         buffer[0] = data[0]
         buffer[1] = data[1] 
@@ -33,72 +33,48 @@ def conn():
 
 def values():
     conn()
-    print(buffer) 
-    my_text.insert(END, "Temperatura: ") 
-    my_text.insert(END, buffer[0]) 
-    my_text.insert(tkinter.END, u" \N{DEGREE SIGN}C") 
-    my_text.insert(tkinter.END, "\n")
-    my_text.insert(tkinter.END, "Pritisak: ") 
-    my_text.insert(tkinter.END, buffer[1]) 
-    my_text.insert(tkinter.END, " hPa") 
-    my_text.insert(tkinter.END, "\n")
-    my_text.insert(tkinter.END, "Svjetlost: ") 
-    my_text.insert(tkinter.END, buffer[2]) 
-    my_text.insert(tkinter.END, " lux") 
-    my_text.insert(tkinter.END, "\n")
-    my_text.insert(tkinter.END, "Vlažnost: ") 
-    my_text.insert(tkinter.END, buffer[3]) 
-    my_text.insert(tkinter.END, " %") 
-    my_text.insert(tkinter.END, "\n")
-    root.after(2000, Values)
-
+    #print(buffer) 
+    sec.delete(0, 'end')
+    sec.insert(END, "Temperatura: ") 
+    sec.insert(END, buffer[0]) 
+    sec.insert(END, u" \N{DEGREE SIGN}C") 
+    sec.insert(END, "\n")
+    sec.insert(END, "Tlak: ") 
+    sec.insert(END, buffer[1]) 
+    sec.insert(END, " hPa") 
+    sec.insert(END, "\n")
+    sec.insert(END, "Svjetlost: ") 
+    sec.insert(END, buffer[2]) 
+    sec.insert(END, " lux") 
+    sec.insert(END, "\n")
+    sec.insert(END, "Vlažnost: ") 
+    sec.insert(END, buffer[3]) 
+    sec.insert(END, " %") 
+    sec.insert(END, "\n")
+    root.after(100, values)
 
 root = Tk()
 root.title('Pametni stan')
 root.geometry('1200x700')
-root['bg'] = '#AC99F2'
+root['bg'] = '#C1DBE3'
 
 var = StringVar(root)
-var.set('hello')
 
 l = Label(root, text = "Vrijednosti parametara")
-l.config(font = ("Courier", 14))
-l.pack()
+l.config(font = ("Courier", 15))
+l.pack(pady=10)
 
 glavni = ttk.Label(
     root,
-    text='Ovo je tekst',
+    text='',
     font=("Arial", 18),
     textvariable=var)
 glavni.pack(ipadx=10, ipady=10, pady=10)
 
 sec = Entry(root, textvariable = var)
-sec.pack()
-#my_text = Text(root, width = 40, height= 6, font=("Arial", 19))
-#my_text.pack(padx = 20)
 
-Entry.insert(0, buffer[1])
-style = ttk.Style()
-style.configure("mystyle.Treeview", font=('Calibri', 14)) # Modify the font of the body
-style.configure("mystyle.Treeview.Heading", font=('Calibri', 15,'bold'))
 
-my_tab = ttk.Treeview(root, style="mystyle.Treeview")
-
-my_tab['columns'] = ('object', 'value')
-
-my_tab.column("#0",width=0, stretch=NO)
-my_tab.column("object",anchor=CENTER)
-my_tab.column("value",anchor=CENTER)
-
-my_tab.heading("object",text="OBJEKT",anchor=CENTER)
-my_tab.heading("value",text="STANJE",anchor=CENTER)
-
-my_tab.insert(parent='',index='end',iid=0,text='',
-values=('Rolete','Otvoreno'))
-my_tab.insert(parent='',index='end',iid=1,text='',
-values=('Svijetlo','Jako'))
-
-my_tab.pack(pady= 20)
+values()
 
 root.mainloop()
 

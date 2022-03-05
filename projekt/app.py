@@ -55,11 +55,12 @@ def conn():
     ser.close()
     x = len(data)
     #print(data)
-    if(x == 4): 
-        temp_buffer.append(data[0])
-        hum_buffer.append(data[3])
-        press_buffer.append(data[1])
-        lux_buffer.append(data[2])
+    if x != 4:
+        conn() 
+    temp_buffer.append(data[0])
+    hum_buffer.append(data[3])
+    press_buffer.append(data[1])
+    lux_buffer.append(data[2])
     
 def values():
     global counter60

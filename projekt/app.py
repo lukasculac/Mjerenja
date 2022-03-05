@@ -17,10 +17,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 port = "COM5"
 data  = []
 buffer = [20,1010,500,100.00]
-table = [
-    ["Proba", ""],
-    ["Test", ""]
-]
+isAuto = True
 
 cooling_threshold = 26
 target_temperature = 22
@@ -94,16 +91,6 @@ def animate_hum(i):
     line_hum.set_data(xar_hum, yar_hum)
     ax1_hum.set_xlim(0, i+1)
 
-def heating():
-    if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
-        return "uključeno"
-    else:
-        return "isključeno"
-def cooling():
-    if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
-        return "uključeno"
-    else:
-        return "isključeno"
 def lights():
     if(float(buffer[2]) > 500):
         return "upaljeno"
@@ -126,11 +113,40 @@ def dehumid():
         return "uključeno"
     else:
         return "isključeno"
+def rucno_auto(i):
+    global isAuto
+    if isAuto == True:
+        return automatski(i)
+    else:
+        return rucno(i)
 
+def automatski(i):
+    if i == 0:
+        if(float(buffer[0]) <= int(zeljenaTmp_spinbox.get())):
+            return "uključeno"
+        else:
+            return "isključeno"
+    else:
+        if(float(buffer[0]) >= int(zeljenaTmp_spinbox.get())):
+            return "uključeno"
+        else:
+            return "isključeno"
+
+def rucno(i):
+    if i == 0:
+        if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
+            return "uključeno"
+        else:
+            return "isključeno"
+    else:
+        if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
+            return "uključeno"
+        else:
+            return "isključeno"
 def tablica():
-    grijanje = Label(tbl_frame,text=heating(), font=("Tahoma", 16), relief=SUNKEN)
+    grijanje = Label(tbl_frame,text=rucno_auto(0), font=("Tahoma", 16), relief=SUNKEN)
     grijanje.grid(row=0, column=1)
-    hladjenje = Label(tbl_frame, text=cooling(), font=("Tahoma", 16), relief=SUNKEN )
+    hladjenje = Label(tbl_frame, text=rucno_auto(1), font=("Tahoma", 16), relief=SUNKEN )
     hladjenje.grid(row=1, column=1)
     osvjetljenje = Label(tbl_frame, text=lights(), font=("Tahoma", 16), relief=SUNKEN )
     osvjetljenje.grid(row=2, column=1)
@@ -171,6 +187,21 @@ def ucitaj():
     zeljeniTlak_spinbox.config(from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var)
 
 
+def setRucno():
+    global isAuto
+    if toggle_rucno.cget('bg') == 'red':
+        toggle_rucno.config(bg='#90ee90')
+        toggle_auto.config(bg='red')
+        isAuto = False
+    
+
+def setAutomatski():
+    global isAuto
+    if toggle_auto.cget('bg') == 'red':
+        toggle_auto.config(bg='#90ee90')
+        toggle_rucno.config(bg='red')
+        isAuto = True
+    
 
 root = Tk()
 root.title('Pametni stan')
@@ -302,8 +333,11 @@ maxTlak_spinbox = \
 maxTlak_spinbox.grid(column = 1, row = 5)
 
 #gumb
-btn_send_thresholds = Button(odabir, text="Pohrani", command = ucitaj, font=('Arial', 10))
-btn_send_thresholds.grid(column=1, row=6)
+toggle_rucno = Button(odabir, bg='red',text="RUČNO", width=10, command=setRucno, font='Arial 10 bold')
+toggle_rucno.grid(column = 0, row = 6)
+
+toggle_auto = Button(odabir, bg='#90ee90', text="AUTOMATSKI",width=10, command = setAutomatski,font='Arial 10 bold')
+toggle_auto.grid(column=1, row=6)
 
 #tablica
 tbl_frame = Frame(root)

@@ -14,13 +14,21 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-port = "COM3"
+port = "COM5"
 data  = []
 buffer = [20,1010,500,100.00]
 table = [
     ["Proba", ""],
     ["Test", ""]
 ]
+
+cooling_threshold = 26
+target_temperature = 22
+heating_threshold = 20
+
+high_humidity_threshold = 60
+humidifier_target = 40
+low_humidity_threshold = 30
 
 def conn():
     global data
@@ -87,12 +95,12 @@ def animate_hum(i):
     ax1_hum.set_xlim(0, i+1)
 
 def heating():
-    if(float(buffer[0]) < 20):
+    if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
         return "uključeno"
     else:
         return "isključeno"
 def cooling():
-    if(float(buffer[0]) > 29):
+    if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
         return "uključeno"
     else:
         return "isključeno"
@@ -102,9 +110,9 @@ def lights():
     else:
         return "ugašeno"
 def pressure():
-    if(float(buffer[1]) < 1010):
+    if(float(buffer[1]) >= int(minTlak_spinbox.get())):
         return "loše"
-    elif(float(buffer[1]) > 1019):
+    elif(float(buffer[1]) >= int(maxTlak_spinbox.get())):
         return "dobro"
     elif(float(buffer[1]) > 1010 and float(buffer[1]) < 1019):
         return "neodređeno"
@@ -118,6 +126,7 @@ def dehumid():
         return "uključeno"
     else:
         return "isključeno"
+
 def tablica():
     grijanje = Label(tbl_frame,text=heating(), font=("Tahoma", 16), relief=SUNKEN)
     grijanje.grid(row=0, column=1)
@@ -133,6 +142,34 @@ def tablica():
     vrijeme.grid(row=5, column=1) 
     
     root.after(100, tablica)
+
+def ucitaj():
+    cooling_threshold = int(hladenjeTmp_spinbox.get())
+
+    heating_threshold = int(grijanjeTmp_spinbox.get())
+
+    high_humidity_threshold = int(minTlak_spinbox.get())
+
+    low_humidity_threshold = int(minTlak_spinbox.get())
+
+    if low_humidity_threshold <= int(zeljeniTlak_spinbox.get()) <= high_humidity_threshold:
+        humidifier_target = int(zeljeniTlak_spinbox.get())
+    else:
+        humidifier_target = int(low_humidity_threshold)
+
+    if heating_threshold <= int(zeljenaTmp_spinbox.get()) <= cooling_threshold:
+        target_temperature = int(zeljenaTmp_spinbox.get())
+    else:
+        target_temperature = int(heating_threshold)
+
+    varTemp = IntVar()
+    varTemp.set(target_temperature)
+    zeljenaTmp_spinbox.config(from_=heating_threshold, to=cooling_threshold, textvariable=varTemp)
+
+    var = IntVar()
+    var.set(humidifier_target)
+    zeljeniTlak_spinbox.config(from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var)
+
 
 
 root = Tk()
@@ -188,9 +225,76 @@ glavni = ttk.Label(
 glavni.pack(ipadx=10, ipady=10, pady=10)
 sec = Entry(root, textvariable = var)
 
+
+l = Label(root, text = "Podešavanje")
+l.config(font = ("Courier", 20))
+l.pack(pady=10)
+
+#definiranje frame-a za odabire
+odabir = Frame(root)
+odabir.pack()
+
+# spinbox za odabir zeljene temp
+var = IntVar()
+var.set(target_temperature)
+zeljenaTmp_label = Label(odabir, text="Odabir temperature(\N{DEGREE SIGN}C): ", font=("Arial", 10))
+zeljenaTmp_label.grid(column = 0, row = 0)
+zeljenaTmp_spinbox = \
+            Spinbox(odabir, from_=heating_threshold, to=cooling_threshold, textvariable=var, font=('Arial', 10))
+zeljenaTmp_spinbox.grid(column = 1, row = 0)
+
+# spinbox za zeljeni tlak
+var = IntVar()
+var.set(target_temperature)
+zeljeniTlak_label = Label(odabir, text="Odabir tlaka(hPa): ", font=("Arial", 10))
+zeljeniTlak_label.grid(column = 0, row = 1)
+zeljeniTlak_spinbox = \
+            Spinbox(odabir, from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var, font=('Arial', 10))
+zeljeniTlak_spinbox.grid(column = 1, row = 1)
+
+# spinbox za temperaturu ukljucivanja grijanja
+var = IntVar()
+var.set(target_temperature)
+grijanjeTmp_label = Label(odabir, text="Uključi grijanje: ", font=("Arial", 10))
+grijanjeTmp_label.grid(column = 0, row = 2)
+grijanjeTmp_spinbox = \
+            Spinbox(odabir, from_=15, to=25, textvariable=var, font=('Arial', 10))
+grijanjeTmp_spinbox.grid(column = 1, row = 2)
+
+# spinbox za temperaturu iskljucivanja grijanja
+var = IntVar()
+var.set(target_temperature)
+hladenjeTmp_label = Label(odabir, text="Uključi hlađenje: ", font=("Arial", 10))
+hladenjeTmp_label.grid(column = 0, row = 3)
+hladenjeTmp_spinbox = \
+            Spinbox(odabir, from_=25, to=35, textvariable=var, font=('Arial', 10))
+hladenjeTmp_spinbox.grid(column = 1, row = 3)
+
+# spinbox za minimalni tlak
+var = IntVar()
+var.set(target_temperature)
+minTlak_label = Label(odabir, text="Min. tlak: ", font=("Arial", 10))
+minTlak_label.grid(column = 0, row = 4)
+minTlak_spinbox = \
+            Spinbox(odabir, from_=1000, to=1007, textvariable=var, font=('Arial', 10))
+minTlak_spinbox.grid(column = 1, row = 4)
+
+# spinbox za maksimalni tlak
+var = IntVar()
+var.set(target_temperature)
+maxTlak_label = Label(odabir, text="Max. tlak: ", font=("Arial", 10))
+maxTlak_label.grid(column = 0, row = 5)
+maxTlak_spinbox = \
+            Spinbox(odabir, from_=1007, to=1020, textvariable=var, font=('Arial', 10))
+maxTlak_spinbox.grid(column = 1, row = 5)
+
+#gumb
+btn_send_thresholds = Button(odabir, text="Pohrani", command = ucitaj, font=('Arial', 10))
+btn_send_thresholds.grid(column=1, row=6)
+
 #tablica
 tbl_frame = Frame(root)
-tbl_frame.pack()
+tbl_frame.pack(ipadx=10, ipady=10, pady=15)
 
 grijanje = Label(tbl_frame,text="GRIJANJE", font=("Tahoma", 17))
 grijanje.grid(row=0, column=0)

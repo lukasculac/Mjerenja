@@ -13,11 +13,27 @@ from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import collections
 
-port = "COM5"
+port = "COM3"
 data  = []
 buffer = [20,1010,500,100.00]
 isAuto = True
+counter60 = 0
+counter10 = 0
+
+temp_buffer = collections.deque(maxlen=10)
+temp_buffer.append(0)
+hum_buffer = collections.deque(maxlen=10)
+hum_buffer.append(0)
+press_buffer = collections.deque(maxlen=10)
+press_buffer.append(0)
+lux_buffer = collections.deque(maxlen=10)
+lux_buffer.append(0)
+last_temp = 0
+last_hum = 0
+pocetak = True
+
 
 cooling_threshold = 26
 target_temperature = 22
@@ -40,53 +56,80 @@ def conn():
     x = len(data)
     #print(data)
     if(x == 4): 
-        buffer[0] = data[0]
-        buffer[1] = data[1] 
-        buffer[2] = data[2]
-        buffer[3] = data[3]
+        temp_buffer.append(data[0])
+        hum_buffer.append(data[3])
+        press_buffer.append(data[1])
+        lux_buffer.append(data[2])
     
 def values():
+    global counter60
+    global counter10
+    global last_temp
+    global pocetak
+    global last_hum
+    
     conn()
-    #print(buffer) 
-    sec.delete(0, 'end')
-    sec.insert(END, "Temperatura: ") 
-    sec.insert(END, buffer[0]) 
-    sec.insert(END, u" \N{DEGREE SIGN}C") 
-    sec.insert(END, "\n")
-    sec.insert(END, "Tlak: ") 
-    sec.insert(END, buffer[1]) 
-    sec.insert(END, " hPa") 
-    sec.insert(END, "\n")
-    sec.insert(END, "Svjetlost: ") 
-    sec.insert(END, buffer[2]) 
-    sec.insert(END, " lux") 
-    sec.insert(END, "\n")
-    sec.insert(END, "Vlažnost: ") 
-    sec.insert(END, buffer[3]) 
-    sec.insert(END, " %") 
-    sec.insert(END, "\n")
+
+    if pocetak == True:
+            last_temp = temp_buffer[-1]
+            last_hum = hum_buffer[-1]
+            counter10 = 10
+            pocetak = False
+    if counter10 == 10:
+        
+        sec.delete(0, 'end')
+        sec.insert(END, "Temperatura: ") 
+        if counter60 == 60:
+            sec.insert(END, temp_buffer[-1] )
+            sec.insert(END, u" \N{DEGREE SIGN}C") 
+            last_temp = temp_buffer[-1]  
+        else:
+            sec.insert(END, last_temp)
+            sec.insert(END, u" \N{DEGREE SIGN}C")
+        sec.insert(END, "\n")
+        sec.insert(END, "Tlak: ") 
+        sec.insert(END, press_buffer[-1] ) 
+        sec.insert(END, " hPa") 
+        sec.insert(END, "\n")
+        sec.insert(END, "Svjetlost: ") 
+        sec.insert(END, lux_buffer[-1]) 
+        sec.insert(END, " lux") 
+        sec.insert(END, "\n")
+        sec.insert(END, "Vlažnost: ") 
+        if counter60 == 60:
+            sec.insert(END,hum_buffer[-1] ) 
+            sec.insert(END, " %") 
+            last_hum = hum_buffer[-1]
+            counter60 = 0
+        else:
+            sec.insert(END, last_hum) 
+            sec.insert(END, " %") 
+        sec.insert(END, "\n")
+        counter10 = 0
+    counter60 = counter60 + 1
+    counter10 = counter10 + 1
     root.after(100, values)
     
 def animate(i):
-    yar.append(int(float(buffer[2])))
+    yar.append(int(float(lux_buffer[-1])))
     xar.append(i)
     line.set_data(xar, yar)
     ax1.set_xlim(0, i+1)
 
 def animate_temp(i):
-    yar_temp.append(int(float(buffer[0])))
+    yar_temp.append(int(float(temp_buffer[-1])))
     xar_temp.append(i)
     line_temp.set_data(xar_temp, yar_temp)
     ax1_temp.set_xlim(0, i+1)
 
 def animate_pre(i):
-    yar_pre.append(int(float(buffer[1])))
+    yar_pre.append(int(float(press_buffer[-1])))
     xar_pre.append(i)
     line_pre.set_data(xar_pre, yar_pre)
     ax1_pre.set_xlim(0, i+1)
 
 def animate_hum(i):
-    yar_hum.append(int(float(buffer[3])))
+    yar_hum.append(int(float(hum_buffer[-1])))
     xar_hum.append(i)
     line_hum.set_data(xar_hum, yar_hum)
     ax1_hum.set_xlim(0, i+1)
@@ -371,7 +414,7 @@ l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 10)
 l.grid(column=1, row=2)
 plotcanvas_temp = FigureCanvasTkAgg(fig_temp, newwindow)
 plotcanvas_temp.get_tk_widget().grid(column=1, row=3)
-ani_temp = animation.FuncAnimation(fig_temp, animate_temp, interval=1000, blit=False)
+ani_temp = animation.FuncAnimation(fig_temp, animate_temp, interval=10000, blit=False)
 
 #pressure
 l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 10), bg = "white")
@@ -385,7 +428,7 @@ l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 10),
 l.grid(column=2, row=2)
 plotcanvas_hum = FigureCanvasTkAgg(fig_hum, newwindow)
 plotcanvas_hum.get_tk_widget().grid(column=2, row=3)
-ani_hum = animation.FuncAnimation(fig_hum, animate_hum, interval=1000, blit=False)
+ani_hum = animation.FuncAnimation(fig_hum, animate_hum, interval=10000, blit=False)
 
 
 root.mainloop()

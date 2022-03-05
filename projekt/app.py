@@ -34,13 +34,13 @@ last_hum = 0
 pocetak = True
 
 
-cooling_threshold = 26
-target_temperature = 22
-heating_threshold = 20
 
-high_humidity_threshold = 60
-humidifier_target = 40
-low_humidity_threshold = 30
+target_temperature = 22
+target_pressure = 1013
+heating_threshold = 15
+cooling_threshold = 30
+high_pressure_threshold = 1007
+low_pressure_threshold = 1000
 
 def conn():
     global data
@@ -113,7 +113,7 @@ def animate(i):
 
 def animate_temp(i):
     yar_temp.append(int(float(temp_buffer[-1])))
-    xar_temp.append(i)
+    xar_temp.append(i*10)
     line_temp.set_data(xar_temp, yar_temp)
     ax1_temp.set_xlim(0, i+1)
 
@@ -125,29 +125,29 @@ def animate_pre(i):
 
 def animate_hum(i):
     yar_hum.append(int(float(hum_buffer[-1])))
-    xar_hum.append(i)
+    xar_hum.append(i*10)
     line_hum.set_data(xar_hum, yar_hum)
     ax1_hum.set_xlim(0, i+1)
 
 def lights():
-    if(float(buffer[2]) > 500):
+    if(float(lux_buffer[-1]) > 50):
         return "upaljeno"
     else:
         return "ugašeno"
 def pressure():
-    if(float(buffer[1]) >= int(minTlak_spinbox.get())):
+    if(float(press_buffer[-1]) >= int(minTlak_spinbox.get())):
         return "loše"
-    elif(float(buffer[1]) >= int(maxTlak_spinbox.get())):
+    elif(float(press_buffer[-1]) >= int(maxTlak_spinbox.get())):
         return "dobro"
-    elif(float(buffer[1]) > 1010 and float(buffer[1]) < 1019):
+    elif(float(press_buffer[-1]) > 1010 and float(press_buffer[-1]) < 1019):
         return "neodređeno"
 def humid():
-    if(float(buffer[3]) < 40):
+    if(float(hum_buffer[-1]) < 40):
         return "uključeno"
     else:
         return "isključeno"
 def dehumid():
-    if(float(buffer[3]) > 60):
+    if(float(hum_buffer[-1]) > 60):
         return "uključeno"
     else:
         return "isključeno"
@@ -160,24 +160,24 @@ def rucno_auto(i):
 
 def automatski(i):
     if i == 0:
-        if(float(buffer[0]) <= int(zeljenaTmp_spinbox.get())):
+        if(float(temp_buffer[-1]) <= int(zeljenaTmp_spinbox.get())):
             return "uključeno"
         else:
             return "isključeno"
-    else:
-        if(float(buffer[0]) >= int(zeljenaTmp_spinbox.get())):
+    else :
+        if(float(temp_buffer[-1]) >= int(zeljenaTmp_spinbox.get())):
             return "uključeno"
         else:
             return "isključeno"
 
 def rucno(i):
     if i == 0:
-        if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
+        if(float(temp_buffer[-1]) <= int(grijanjeTmp_spinbox.get())):
             return "uključeno"
         else:
             return "isključeno"
     else:
-        if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
+        if(float(temp_buffer[-1]) >= int(hladenjeTmp_spinbox.get())):
             return "uključeno"
         else:
             return "isključeno"
@@ -194,9 +194,16 @@ def tablica():
     odvlazivanje.grid(row=4, column=1)
     vrijeme = Label(tbl_frame, text=pressure(), font=("Tahoma", 16), relief=SUNKEN )
     vrijeme.grid(row=5, column=1) 
-    
+    prozor = Label(tbl_frame, text=prozorf(), font=("Tahoma", 16), relief=SUNKEN )
+    prozor.grid(row=6, column = 1) 
     root.after(100, tablica)
 
+
+def prozorf():
+    if(float(press_buffer[-1]) < 1010):
+        return "zatvoreno"
+    else:
+        return "otvoreno"
 def ucitaj():
     cooling_threshold = int(hladenjeTmp_spinbox.get())
 
@@ -243,7 +250,7 @@ def setAutomatski():
 
 root = Tk()
 root.title('Pametni stan')
-root.geometry('400x700+50+50')
+root.geometry('400x750+50+50')
 root['bg'] = '#C1DBE3'
 xar = []
 yar = []
@@ -322,39 +329,39 @@ var.set(target_temperature)
 zeljenaTmp_label = Label(odabir, text="Odabir temperature(\N{DEGREE SIGN}C): ", font=("Arial", 10))
 zeljenaTmp_label.grid(column = 0, row = 0)
 zeljenaTmp_spinbox = \
-            Spinbox(odabir, from_=heating_threshold, to=cooling_threshold, textvariable=var, font=('Arial', 10))
+            Spinbox(odabir, from_=0, to=40, textvariable=var, font=('Arial', 10))
 zeljenaTmp_spinbox.grid(column = 1, row = 0)
 
 # spinbox za zeljeni tlak
 var = IntVar()
-var.set(target_temperature)
+var.set(target_pressure)
 zeljeniTlak_label = Label(odabir, text="Odabir tlaka(hPa): ", font=("Arial", 10))
 zeljeniTlak_label.grid(column = 0, row = 1)
 zeljeniTlak_spinbox = \
-            Spinbox(odabir, from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var, font=('Arial', 10))
+            Spinbox(odabir, from_=900, to=1100, textvariable=var, font=('Arial', 10))
 zeljeniTlak_spinbox.grid(column = 1, row = 1)
 
 # spinbox za temperaturu ukljucivanja grijanja
 var = IntVar()
-var.set(target_temperature)
+var.set(heating_threshold)
 grijanjeTmp_label = Label(odabir, text="Uključi grijanje: ", font=("Arial", 10))
 grijanjeTmp_label.grid(column = 0, row = 2)
 grijanjeTmp_spinbox = \
-            Spinbox(odabir, from_=15, to=25, textvariable=var, font=('Arial', 10))
+            Spinbox(odabir, from_=-20, to=25, textvariable=var, font=('Arial', 10))
 grijanjeTmp_spinbox.grid(column = 1, row = 2)
 
 # spinbox za temperaturu iskljucivanja grijanja
 var = IntVar()
-var.set(target_temperature)
+var.set(cooling_threshold)
 hladenjeTmp_label = Label(odabir, text="Uključi hlađenje: ", font=("Arial", 10))
 hladenjeTmp_label.grid(column = 0, row = 3)
 hladenjeTmp_spinbox = \
-            Spinbox(odabir, from_=25, to=35, textvariable=var, font=('Arial', 10))
+            Spinbox(odabir, from_=20, to=40, textvariable=var, font=('Arial', 10))
 hladenjeTmp_spinbox.grid(column = 1, row = 3)
 
 # spinbox za minimalni tlak
 var = IntVar()
-var.set(target_temperature)
+var.set(low_pressure_threshold)
 minTlak_label = Label(odabir, text="Min. tlak: ", font=("Arial", 10))
 minTlak_label.grid(column = 0, row = 4)
 minTlak_spinbox = \
@@ -363,7 +370,7 @@ minTlak_spinbox.grid(column = 1, row = 4)
 
 # spinbox za maksimalni tlak
 var = IntVar()
-var.set(target_temperature)
+var.set(high_pressure_threshold)
 maxTlak_label = Label(odabir, text="Max. tlak: ", font=("Arial", 10))
 maxTlak_label.grid(column = 0, row = 5)
 maxTlak_spinbox = \
@@ -393,7 +400,8 @@ odvlazivanje = Label(tbl_frame, text="ODVLAŽIVANJE", font=("Tahoma", 17))
 odvlazivanje.grid(row=4, column=0)
 vrijeme = Label(tbl_frame, text="VRIJEME", font=("Tahoma", 17))
 vrijeme.grid(row=5, column=0)
-
+prozor = Label(tbl_frame, text="PROZOR/VRATA", font=("Tahoma", 17))
+prozor.grid(row=6, column=0)
 tablica()
 values()
 
@@ -427,5 +435,3 @@ ani_hum = animation.FuncAnimation(fig_hum, animate_hum, interval=10000, blit=Fal
 
 
 root.mainloop()
-
-

@@ -14,11 +14,13 @@ import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-port = "COM3"
+port = "COM5"
 data  = []
 buffer = [20,1010,500,100.00]
-
-isAuto = True
+table = [
+    ["Proba", ""],
+    ["Test", ""]
+]
 
 cooling_threshold = 26
 target_temperature = 22
@@ -92,38 +94,16 @@ def animate_hum(i):
     line_hum.set_data(xar_hum, yar_hum)
     ax1_hum.set_xlim(0, i+1)
 
-def rucno_auto(i):
-    global isAuto
-    if isAuto == True:
-        return automatski(i)
+def heating():
+    if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
+        return "uključeno"
     else:
-        return rucno(i)
-
-def automatski(i):
-    if i == 0:
-        if(float(buffer[0]) <= int(zeljenaTmp_spinbox.get())):
-            return "uključeno"
-        else:
-            return "isključeno"
+        return "isključeno"
+def cooling():
+    if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
+        return "uključeno"
     else:
-        if(float(buffer[0]) >= int(zeljenaTmp_spinbox.get())):
-            return "uključeno"
-        else:
-            return "isključeno"
-
-def rucno(i):
-    if i == 0:
-        if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
-            return "uključeno"
-        else:
-            return "isključeno"
-    else:
-        if(float(buffer[0]) >= int(hladenjeTmp_spinbox.get())):
-            return "uključeno"
-        else:
-            return "isključeno"
-
-
+        return "isključeno"
 def lights():
     if(float(buffer[2]) > 500):
         return "upaljeno"
@@ -148,9 +128,9 @@ def dehumid():
         return "isključeno"
 
 def tablica():
-    grijanje = Label(tbl_frame,text=rucno_auto(0), font=("Tahoma", 16), relief=SUNKEN)
+    grijanje = Label(tbl_frame,text=heating(), font=("Tahoma", 16), relief=SUNKEN)
     grijanje.grid(row=0, column=1)
-    hladjenje = Label(tbl_frame, text=rucno_auto(1), font=("Tahoma", 16), relief=SUNKEN )
+    hladjenje = Label(tbl_frame, text=cooling(), font=("Tahoma", 16), relief=SUNKEN )
     hladjenje.grid(row=1, column=1)
     osvjetljenje = Label(tbl_frame, text=lights(), font=("Tahoma", 16), relief=SUNKEN )
     osvjetljenje.grid(row=2, column=1)
@@ -190,21 +170,7 @@ def ucitaj():
     var.set(humidifier_target)
     zeljeniTlak_spinbox.config(from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var)
 
-def setRucno():
-    global isAuto
-    if toggle_rucno.cget('bg') == 'red':
-        toggle_rucno.config(bg='#90ee90')
-        toggle_auto.config(bg='red')
-        isAuto = False
-    
 
-def setAutomatski():
-    global isAuto
-    if toggle_auto.cget('bg') == 'red':
-        toggle_auto.config(bg='#90ee90')
-        toggle_rucno.config(bg='red')
-        isAuto = True
-    
 
 root = Tk()
 root.title('Pametni stan')
@@ -219,30 +185,43 @@ yar_pre = []
 xar_hum = []
 yar_hum = []
 var = StringVar(root)
+
 newwindow = tk.Toplevel(root)
 newwindow.geometry("1500x500+500+300")
+newwindow['bg'] = 'white'
+
 
 style.use('ggplot')
 #plot_svjetlost
 fig = plt.figure(figsize=(14, 4.5), dpi=50)
 ax1 = fig.add_subplot(1, 1, 1)
 ax1.set_ylim(0, 1000)
+ax1.set_xlabel('Vrijeme, s')
+ax1.set_ylabel('Svjetlost, lux')
 line, = ax1.plot(xar, yar, 'r', marker='o')
+
 #plot_temp
 fig_temp = plt.figure(figsize=(14, 4.5), dpi=50)
 ax1_temp = fig_temp.add_subplot(1, 1, 1)
 ax1_temp.set_ylim(0, 50)
+ax1_temp.set_xlabel('Vrijeme, s')
+ax1_temp.set_ylabel('Temperatura, \N{DEGREE SIGN}C')
 line_temp, = ax1_temp.plot(xar_temp, yar_temp, 'r', marker='o')
+
 #plot_pre
 fig_pre = plt.figure(figsize=(14, 4.5), dpi=50)
 ax1_pre = fig_pre.add_subplot(1, 1, 1)
 ax1_pre.set_ylim(900, 1200)
 line_pre, = ax1_pre.plot(xar_pre, yar_pre, 'r', marker='o')
+ax1_pre.set_xlabel('Vrijeme, s')
+ax1_pre.set_ylabel('Tlak, pHa')
+
 #plot_hum
 fig_hum = plt.figure(figsize=(14, 4.5), dpi=50)
 ax1_hum = fig_hum.add_subplot(1, 1, 1)
 ax1_hum.set_ylim(0, 100)
 line_hum, = ax1_hum.plot(xar_hum, yar_hum, 'r', marker='o')
+ax1_hum.set_ylabel('Vlaga, %')
 
 
 #Naslov
@@ -323,11 +302,8 @@ maxTlak_spinbox = \
 maxTlak_spinbox.grid(column = 1, row = 5)
 
 #gumb
-toggle_rucno = Button(odabir, bg='red',text="RUČNO", width=10, command=setRucno, font='Arial 10 bold')
-toggle_rucno.grid(column = 0, row = 6)
-
-toggle_auto = Button(odabir, bg='#90ee90', text="AUTOMATSKI",width=10, command = setAutomatski,font='Arial 10 bold')
-toggle_auto.grid(column=1, row=6)
+btn_send_thresholds = Button(odabir, text="Pohrani", command = ucitaj, font=('Arial', 10))
+btn_send_thresholds.grid(column=1, row=6)
 
 #tablica
 tbl_frame = Frame(root)
@@ -350,24 +326,34 @@ tablica()
 values()
 
 #svjetlost
+l = Label(newwindow, text = "Jačina svjetlosti:", font=("Tahoma", 10), bg = "white")
+l.grid(column=1, row=0)
 plotcanvas = FigureCanvasTkAgg(fig, newwindow)
 plotcanvas.get_tk_widget().grid(column=1, row=1)
 ani = animation.FuncAnimation(fig, animate, interval=1000, blit=False)
 
 #temp
+l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 10), bg = "white")
+l.grid(column=1, row=2)
 plotcanvas_temp = FigureCanvasTkAgg(fig_temp, newwindow)
-plotcanvas_temp.get_tk_widget().grid(column=1, row=2)
+plotcanvas_temp.get_tk_widget().grid(column=1, row=3)
 ani_temp = animation.FuncAnimation(fig_temp, animate_temp, interval=1000, blit=False)
 
 #pressure
+l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 10), bg = "white")
+l.grid(column=2, row=0)
 plotcanvas_pre = FigureCanvasTkAgg(fig_pre, newwindow)
 plotcanvas_pre.get_tk_widget().grid(column=2, row=1)
 ani_pre = animation.FuncAnimation(fig_pre, animate_pre, interval=1000, blit=False)
 
 #humidity
+l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 10), bg = "white")
+l.grid(column=2, row=2)
 plotcanvas_hum = FigureCanvasTkAgg(fig_hum, newwindow)
-plotcanvas_hum.get_tk_widget().grid(column=2, row=2)
+plotcanvas_hum.get_tk_widget().grid(column=2, row=3)
 ani_hum = animation.FuncAnimation(fig_hum, animate_hum, interval=1000, blit=False)
 
 
 root.mainloop()
+
+

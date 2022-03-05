@@ -19,7 +19,6 @@ port = "COM3"
 data  = []
 buffer = [20,1010,500,100.00]
 isAuto = True
-counter60 = 0
 counter10 = 0
 
 temp_buffer = collections.deque(maxlen=10)
@@ -63,7 +62,6 @@ def conn():
     lux_buffer.append(data[2])
     
 def values():
-    global counter60
     global counter10
     global last_temp
     global pocetak
@@ -72,42 +70,38 @@ def values():
     conn()
 
     if pocetak == True:
-            last_temp = temp_buffer[-1]
-            last_hum = hum_buffer[-1]
-            counter10 = 10
-            pocetak = False
+        last_temp = temp_buffer[-1]
+        last_hum = hum_buffer[-1]
+        pocetak = False   
+    sec.delete(0, 'end')
+    sec.insert(END, "Temperatura: ") 
     if counter10 == 10:
-        
-        sec.delete(0, 'end')
-        sec.insert(END, "Temperatura: ") 
-        if counter60 == 60:
-            sec.insert(END, temp_buffer[-1] )
-            sec.insert(END, u" \N{DEGREE SIGN}C") 
-            last_temp = temp_buffer[-1]  
-        else:
-            sec.insert(END, last_temp)
-            sec.insert(END, u" \N{DEGREE SIGN}C")
-        sec.insert(END, "\n")
-        sec.insert(END, "Tlak: ") 
-        sec.insert(END, press_buffer[-1] ) 
-        sec.insert(END, " hPa") 
-        sec.insert(END, "\n")
-        sec.insert(END, "Svjetlost: ") 
-        sec.insert(END, lux_buffer[-1]) 
-        sec.insert(END, " lux") 
-        sec.insert(END, "\n")
-        sec.insert(END, "Vlažnost: ") 
-        if counter60 == 60:
-            sec.insert(END,hum_buffer[-1] ) 
-            sec.insert(END, " %") 
-            last_hum = hum_buffer[-1]
-            counter60 = 0
-        else:
-            sec.insert(END, last_hum) 
-            sec.insert(END, " %") 
-        sec.insert(END, "\n")
+        sec.insert(END, temp_buffer[-1] )
+        sec.insert(END, u" \N{DEGREE SIGN}C") 
+        last_temp = temp_buffer[-1]  
+    else:
+        sec.insert(END, last_temp)
+        sec.insert(END, u" \N{DEGREE SIGN}C")
+    sec.insert(END, "\n")
+    sec.insert(END, "Tlak: ") 
+    sec.insert(END, press_buffer[-1] ) 
+    sec.insert(END, " hPa") 
+    sec.insert(END, "\n")
+    sec.insert(END, "Svjetlost: ") 
+    sec.insert(END, lux_buffer[-1]) 
+    sec.insert(END, " lux") 
+    sec.insert(END, "\n")
+    sec.insert(END, "Vlažnost: ") 
+    if counter10 == 10:
+        sec.insert(END,hum_buffer[-1] ) 
+        sec.insert(END, " %") 
+        last_hum = hum_buffer[-1]
         counter10 = 0
-    counter60 = counter60 + 1
+    else:
+        sec.insert(END, last_hum) 
+        sec.insert(END, " %") 
+    sec.insert(END, "\n")
+    
     counter10 = counter10 + 1
     root.after(100, values)
     

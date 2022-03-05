@@ -15,10 +15,11 @@ from matplotlib import style
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import collections
 
-port = "COM3"
+port = "COM5"
 data  = []
 buffer = [20,1010,500,100.00]
 isAuto = True
+counter60 = 0
 counter10 = 0
 
 temp_buffer = collections.deque(maxlen=10)
@@ -62,6 +63,7 @@ def conn():
     lux_buffer.append(data[2])
     
 def values():
+    global counter60
     global counter10
     global last_temp
     global pocetak
@@ -70,38 +72,42 @@ def values():
     conn()
 
     if pocetak == True:
-        last_temp = temp_buffer[-1]
-        last_hum = hum_buffer[-1]
-        pocetak = False   
-    sec.delete(0, 'end')
-    sec.insert(END, "Temperatura: ") 
+            last_temp = temp_buffer[-1]
+            last_hum = hum_buffer[-1]
+            counter10 = 10
+            pocetak = False
     if counter10 == 10:
-        sec.insert(END, temp_buffer[-1] )
-        sec.insert(END, u" \N{DEGREE SIGN}C") 
-        last_temp = temp_buffer[-1]  
-    else:
-        sec.insert(END, last_temp)
-        sec.insert(END, u" \N{DEGREE SIGN}C")
-    sec.insert(END, "\n")
-    sec.insert(END, "Tlak: ") 
-    sec.insert(END, press_buffer[-1] ) 
-    sec.insert(END, " hPa") 
-    sec.insert(END, "\n")
-    sec.insert(END, "Svjetlost: ") 
-    sec.insert(END, lux_buffer[-1]) 
-    sec.insert(END, " lux") 
-    sec.insert(END, "\n")
-    sec.insert(END, "Vlažnost: ") 
-    if counter10 == 10:
-        sec.insert(END,hum_buffer[-1] ) 
-        sec.insert(END, " %") 
-        last_hum = hum_buffer[-1]
+        
+        sec.delete(0, 'end')
+        sec.insert(END, "Temperatura: ") 
+        if counter60 == 60:
+            sec.insert(END, temp_buffer[-1] )
+            sec.insert(END, u" \N{DEGREE SIGN}C") 
+            last_temp = temp_buffer[-1]  
+        else:
+            sec.insert(END, last_temp)
+            sec.insert(END, u" \N{DEGREE SIGN}C")
+        sec.insert(END, "\n")
+        sec.insert(END, "Tlak: ") 
+        sec.insert(END, press_buffer[-1] ) 
+        sec.insert(END, " hPa") 
+        sec.insert(END, "\n")
+        sec.insert(END, "Svjetlost: ") 
+        sec.insert(END, lux_buffer[-1]) 
+        sec.insert(END, " lux") 
+        sec.insert(END, "\n")
+        sec.insert(END, "Vlažnost: ") 
+        if counter60 == 60:
+            sec.insert(END,hum_buffer[-1] ) 
+            sec.insert(END, " %") 
+            last_hum = hum_buffer[-1]
+            counter60 = 0
+        else:
+            sec.insert(END, last_hum) 
+            sec.insert(END, " %") 
+        sec.insert(END, "\n")
         counter10 = 0
-    else:
-        sec.insert(END, last_hum) 
-        sec.insert(END, " %") 
-    sec.insert(END, "\n")
-    
+    counter60 = counter60 + 1
     counter10 = counter10 + 1
     root.after(100, values)
     
@@ -113,27 +119,29 @@ def animate(i):
 
 def animate_temp(i):
     yar_temp.append(int(float(temp_buffer[-1])))
-    xar_temp.append(i)
+    xar_temp.append(i * 10)
     line_temp.set_data(xar_temp, yar_temp)
-    ax1_temp.set_xlim(0, i+1)
+    ax1_temp.set_xlim(0, i * 10)
 
 def animate_pre(i):
     yar_pre.append(int(float(press_buffer[-1])))
     xar_pre.append(i)
     line_pre.set_data(xar_pre, yar_pre)
-    ax1_pre.set_xlim(0, i+1)
+    ax1_pre.set_xlim(0, i)
 
 def animate_hum(i):
     yar_hum.append(int(float(hum_buffer[-1])))
-    xar_hum.append(i)
+    xar_hum.append(i*10)
     line_hum.set_data(xar_hum, yar_hum)
-    ax1_hum.set_xlim(0, i+1)
+    ax1_hum.set_xlim(0, i*10)
+    
 
 def lights():
-    if(float(buffer[2]) > 500):
+    if(float(buffer[2]) > 50):
         return "upaljeno"
     else:
         return "ugašeno"
+    print()
 def pressure():
     if(float(buffer[1]) >= int(minTlak_spinbox.get())):
         return "loše"
@@ -141,6 +149,7 @@ def pressure():
         return "dobro"
     elif(float(buffer[1]) > 1010 and float(buffer[1]) < 1019):
         return "neodređeno"
+    print(int(maxTlak_spinbox.get()))
 def humid():
     if(float(buffer[3]) < 40):
         return "uključeno"
@@ -151,13 +160,18 @@ def dehumid():
         return "uključeno"
     else:
         return "isključeno"
+def prozorf():
+    if(float(buffer[1]) < 1010):
+        return "zatvoreno"
+    else:
+        return "otvoreno"
+    
 def rucno_auto(i):
     global isAuto
     if isAuto == True:
         return automatski(i)
     else:
         return rucno(i)
-
 def automatski(i):
     if i == 0:
         if(float(buffer[0]) <= int(zeljenaTmp_spinbox.get())):
@@ -169,7 +183,6 @@ def automatski(i):
             return "uključeno"
         else:
             return "isključeno"
-
 def rucno(i):
     if i == 0:
         if(float(buffer[0]) <= int(grijanjeTmp_spinbox.get())):
@@ -181,19 +194,22 @@ def rucno(i):
             return "uključeno"
         else:
             return "isključeno"
+
 def tablica():
     grijanje = Label(tbl_frame,text=rucno_auto(0), font=("Tahoma", 16), relief=SUNKEN)
-    grijanje.grid(row=0, column=1)
+    grijanje.grid(row=0, column = 1)
     hladjenje = Label(tbl_frame, text=rucno_auto(1), font=("Tahoma", 16), relief=SUNKEN )
-    hladjenje.grid(row=1, column=1)
+    hladjenje.grid(row=1, column = 1)
     osvjetljenje = Label(tbl_frame, text=lights(), font=("Tahoma", 16), relief=SUNKEN )
-    osvjetljenje.grid(row=2, column=1)
+    osvjetljenje.grid(row=2, column = 1)
     ovlazivanje = Label(tbl_frame, text=humid(), font=("Tahoma", 16), relief=SUNKEN )
-    ovlazivanje.grid(row=3, column=1)
+    ovlazivanje.grid(row=3, column = 1)
     odvlazivanje = Label(tbl_frame, text=dehumid(), font=("Tahoma", 16), relief=SUNKEN )
-    odvlazivanje.grid(row=4, column=1)
+    odvlazivanje.grid(row=4, column = 1)
     vrijeme = Label(tbl_frame, text=pressure(), font=("Tahoma", 16), relief=SUNKEN )
-    vrijeme.grid(row=5, column=1) 
+    vrijeme.grid(row=5, column = 1) 
+    prozor = Label(tbl_frame, text=prozorf(), font=("Tahoma", 16), relief=SUNKEN )
+    prozor.grid(row=6, column = 1) 
     
     root.after(100, tablica)
 
@@ -243,7 +259,7 @@ def setAutomatski():
 
 root = Tk()
 root.title('Pametni stan')
-root.geometry('400x700+50+50')
+root.geometry('400x750+50+50')
 root['bg'] = '#C1DBE3'
 xar = []
 yar = []
@@ -295,7 +311,7 @@ ax1_hum.set_ylabel('Vlaga, %')
 
 #Naslov
 l = Label(root, text = "Vrijednosti parametara")
-l.config(font = ("Courier", 15))
+l.config(font = ("Courier", 20))
 l.pack(pady=10)
 
 #Izmjereni podaci
@@ -393,33 +409,36 @@ odvlazivanje = Label(tbl_frame, text="ODVLAŽIVANJE", font=("Tahoma", 17))
 odvlazivanje.grid(row=4, column=0)
 vrijeme = Label(tbl_frame, text="VRIJEME", font=("Tahoma", 17))
 vrijeme.grid(row=5, column=0)
+prozor = Label(tbl_frame, text="PROZOR/VRATA", font=("Tahoma", 17))
+prozor.grid(row=6, column=0)
+
 
 tablica()
 values()
 
 #svjetlost
-l = Label(newwindow, text = "Jačina svjetlosti:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Jačina svjetlosti:", font=("Tahoma", 12, 'bold'), bg = "white")
 l.grid(column=1, row=0)
 plotcanvas = FigureCanvasTkAgg(fig, newwindow)
 plotcanvas.get_tk_widget().grid(column=1, row=1)
 ani = animation.FuncAnimation(fig, animate, interval=1000, blit=False)
 
 #temp
-l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 12, 'bold'), bg = "white")
 l.grid(column=1, row=2)
 plotcanvas_temp = FigureCanvasTkAgg(fig_temp, newwindow)
 plotcanvas_temp.get_tk_widget().grid(column=1, row=3)
 ani_temp = animation.FuncAnimation(fig_temp, animate_temp, interval=10000, blit=False)
 
 #pressure
-l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 12, 'bold'), bg = "white")
 l.grid(column=2, row=0)
 plotcanvas_pre = FigureCanvasTkAgg(fig_pre, newwindow)
 plotcanvas_pre.get_tk_widget().grid(column=2, row=1)
 ani_pre = animation.FuncAnimation(fig_pre, animate_pre, interval=1000, blit=False)
 
 #humidity
-l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 12, 'bold'), bg = "white")
 l.grid(column=2, row=2)
 plotcanvas_hum = FigureCanvasTkAgg(fig_hum, newwindow)
 plotcanvas_hum.get_tk_widget().grid(column=2, row=3)
@@ -427,5 +446,3 @@ ani_hum = animation.FuncAnimation(fig_hum, animate_hum, interval=10000, blit=Fal
 
 
 root.mainloop()
-
-

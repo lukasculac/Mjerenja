@@ -157,6 +157,11 @@ def rucno_auto(i):
         return automatski(i)
     else:
         return rucno(i)
+def prozorf():
+    if(float(press_buffer[-1]) < 1010):
+        return "zatvoreno"
+    else:
+        return "otvoreno"
 
 def automatski(i):
     if i == 0:
@@ -197,40 +202,6 @@ def tablica():
     vrijeme = Label(tbl_frame, text=pressure(), font=("Tahoma", 16), relief=SUNKEN )
     vrijeme.grid(row=6, column=1) 
     root.after(100, tablica)
-
-
-def prozorf():
-    if(float(press_buffer[-1]) < 1010):
-        return "zatvoreno"
-    else:
-        return "otvoreno"
-def ucitaj():
-    cooling_threshold = int(hladenjeTmp_spinbox.get())
-
-    heating_threshold = int(grijanjeTmp_spinbox.get())
-
-    high_humidity_threshold = int(minTlak_spinbox.get())
-
-    low_humidity_threshold = int(minTlak_spinbox.get())
-
-    if low_humidity_threshold <= int(zeljeniTlak_spinbox.get()) <= high_humidity_threshold:
-        humidifier_target = int(zeljeniTlak_spinbox.get())
-    else:
-        humidifier_target = int(low_humidity_threshold)
-
-    if heating_threshold <= int(zeljenaTmp_spinbox.get()) <= cooling_threshold:
-        target_temperature = int(zeljenaTmp_spinbox.get())
-    else:
-        target_temperature = int(heating_threshold)
-
-    varTemp = IntVar()
-    varTemp.set(target_temperature)
-    zeljenaTmp_spinbox.config(from_=heating_threshold, to=cooling_threshold, textvariable=varTemp)
-
-    var = IntVar()
-    var.set(humidifier_target)
-    zeljeniTlak_spinbox.config(from_=low_humidity_threshold, to=high_humidity_threshold, textvariable=var)
-
 
 def setRucno():
     global isAuto
@@ -298,6 +269,7 @@ ax1_hum = fig_hum.add_subplot(1, 1, 1)
 ax1_hum.set_ylim(0, 100)
 line_hum, = ax1_hum.plot(xar_hum, yar_hum, 'r', marker='o')
 ax1_hum.set_ylabel('Vlaga, %')
+ax1_hum.set_xlabel('Vrijeme, s')
 
 
 #Naslov

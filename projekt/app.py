@@ -15,7 +15,7 @@ from matplotlib import style
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import collections
 
-port = "COM3"
+port = "COM5"
 data  = []
 buffer = [20,1010,500,100.00]
 isAuto = True
@@ -192,10 +192,10 @@ def tablica():
     ovlazivanje.grid(row=3, column=1)
     odvlazivanje = Label(tbl_frame, text=dehumid(), font=("Tahoma", 16), relief=SUNKEN )
     odvlazivanje.grid(row=4, column=1)
-    vrijeme = Label(tbl_frame, text=pressure(), font=("Tahoma", 16), relief=SUNKEN )
-    vrijeme.grid(row=5, column=1) 
     prozor = Label(tbl_frame, text=prozorf(), font=("Tahoma", 16), relief=SUNKEN )
-    prozor.grid(row=6, column = 1) 
+    prozor.grid(row=5, column = 1) 
+    vrijeme = Label(tbl_frame, text=pressure(), font=("Tahoma", 16), relief=SUNKEN )
+    vrijeme.grid(row=6, column=1) 
     root.after(100, tablica)
 
 
@@ -271,7 +271,7 @@ style.use('ggplot')
 #plot_svjetlost
 fig = plt.figure(figsize=(14, 4.5), dpi=50)
 ax1 = fig.add_subplot(1, 1, 1)
-ax1.set_ylim(0, 1000)
+ax1.set_ylim(0, 10000)
 ax1.set_xlabel('Vrijeme, s')
 ax1.set_ylabel('Svjetlost, lux')
 line, = ax1.plot(xar, yar, 'r', marker='o')
@@ -302,7 +302,7 @@ ax1_hum.set_ylabel('Vlaga, %')
 
 #Naslov
 l = Label(root, text = "Vrijednosti parametara")
-l.config(font = ("Courier", 15))
+l.config(font = ("Courier", 17))
 l.pack(pady=10)
 
 #Izmjereni podaci
@@ -316,7 +316,7 @@ sec = Entry(root, textvariable = var)
 
 
 l = Label(root, text = "Podešavanje")
-l.config(font = ("Courier", 20))
+l.config(font = ("Courier", 17))
 l.pack(pady=10)
 
 #definiranje frame-a za odabire
@@ -398,36 +398,36 @@ ovlazivanje = Label(tbl_frame, text="OVLAŽIVANJE", font=("Tahoma", 17))
 ovlazivanje.grid(row=3, column=0)
 odvlazivanje = Label(tbl_frame, text="ODVLAŽIVANJE", font=("Tahoma", 17))
 odvlazivanje.grid(row=4, column=0)
-vrijeme = Label(tbl_frame, text="VRIJEME", font=("Tahoma", 17))
-vrijeme.grid(row=5, column=0)
 prozor = Label(tbl_frame, text="PROZOR/VRATA", font=("Tahoma", 17))
-prozor.grid(row=6, column=0)
+prozor.grid(row=5, column=0)
+vrijeme = Label(tbl_frame, text="VRIJEME", font=("Tahoma", 17))
+vrijeme.grid(row=6, column=0)
 tablica()
 values()
 
 #svjetlost
-l = Label(newwindow, text = "Jačina svjetlosti:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Jačina svjetlosti:", font=("Tahoma", 10, 'bold'), bg = "white")
 l.grid(column=1, row=0)
 plotcanvas = FigureCanvasTkAgg(fig, newwindow)
 plotcanvas.get_tk_widget().grid(column=1, row=1)
 ani = animation.FuncAnimation(fig, animate, interval=1000, blit=False)
 
 #temp
-l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz temperature u vremenu:", font=("Tahoma", 10, 'bold'), bg = "white")
 l.grid(column=1, row=2)
 plotcanvas_temp = FigureCanvasTkAgg(fig_temp, newwindow)
 plotcanvas_temp.get_tk_widget().grid(column=1, row=3)
 ani_temp = animation.FuncAnimation(fig_temp, animate_temp, interval=10000, blit=False)
 
 #pressure
-l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz tlaka u vremenu:", font=("Tahoma", 10, 'bold'), bg = "white")
 l.grid(column=2, row=0)
 plotcanvas_pre = FigureCanvasTkAgg(fig_pre, newwindow)
 plotcanvas_pre.get_tk_widget().grid(column=2, row=1)
 ani_pre = animation.FuncAnimation(fig_pre, animate_pre, interval=1000, blit=False)
 
 #humidity
-l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 10), bg = "white")
+l = Label(newwindow, text = "Prikaz vlažnosti u vremenu:", font=("Tahoma", 10, 'bold'), bg = "white")
 l.grid(column=2, row=2)
 plotcanvas_hum = FigureCanvasTkAgg(fig_hum, newwindow)
 plotcanvas_hum.get_tk_widget().grid(column=2, row=3)
